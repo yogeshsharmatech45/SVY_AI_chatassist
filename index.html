@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReplyMitra: an AI receptionist for your WhatsApp</title>
+<meta name="description" content="ReplyMitra answers customer questions, books appointments and hands tricky chats to you on WhatsApp, in English, Hindi or Hinglish. Built for clinics, salons and coaching centres.">
+<meta name="theme-color" content="#0E4B4B">
+<meta property="og:title" content="ReplyMitra: an AI receptionist for your WhatsApp">
+<meta property="og:description" content="Answers questions, books appointments and hands tricky chats to you, in English, Hindi or Hinglish.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0E4B4B; --teal-ink:#0B3434; --mist:#EEF3EF; --paper:#F8FBF8;
+  --marigold:#F0A51F; --marigold-deep:#D18F10; --bubble-out:#D4EFC9; --chat-bg:#E3ECE6;
+  --text:#24403F; --muted:#51696A; --line:#C6D5CD;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:5rem}
+body{margin:0;background:var(--paper);color:var(--text);font:400 1.0625rem/1.65 var(--body)}
+img,svg{max-width:100%}
+a{color:var(--teal)}
+h1,h2,h3{font-family:var(--display);color:var(--teal-ink);line-height:1.12;letter-spacing:-.015em;margin:0}
+h1{font-size:clamp(2.35rem,1.4rem + 4.2vw,4.1rem);font-weight:700;letter-spacing:-.025em}
+h2{font-size:clamp(1.75rem,1.2rem + 2vw,2.6rem);font-weight:700}
+h3{font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+p{margin:0 0 1em}
+.wrap{max-width:1120px;margin:0 auto;padding:0 1.25rem}
+.skip{position:absolute;left:-999px;top:0;background:var(--marigold);color:var(--teal-ink);padding:.6rem 1rem;z-index:100}
+.skip:focus{left:0}
+:focus-visible{outline:3px solid var(--marigold);outline-offset:3px;border-radius:4px}
+
+/* buttons */
+.btn{display:inline-block;font:700 1rem/1 var(--display);padding:.95rem 1.4rem;border-radius:10px;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.btn-primary{background:var(--marigold);color:var(--teal-ink)}
+.btn-primary:hover{background:var(--marigold-deep)}
+.btn-ghost{border-color:var(--teal);color:var(--teal)}
+.btn-ghost:hover{background:var(--teal);color:#fff}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(248,251,248,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:4rem}
+.brand{font:700 1.3rem var(--display);color:var(--teal-ink);text-decoration:none;letter-spacing:-.02em}
+.nav ul{display:flex;gap:1.6rem;list-style:none;margin:0;padding:0}
+.nav ul a{font:500 .98rem var(--display);color:var(--text);text-decoration:none}
+.nav ul a:hover{color:var(--teal);text-decoration:underline}
+.nav .btn{padding:.7rem 1.1rem;font-size:.95rem}
+@media(max-width:860px){.nav ul{display:none}}
+
+/* hero */
+.hero{padding:3.5rem 0 4.5rem}
+.hero .wrap{display:grid;gap:3rem;align-items:center}
+@media(min-width:900px){.hero .wrap{grid-template-columns:1.1fr .9fr}}
+.lede{font-size:1.2rem;max-width:34rem;margin:1.4rem 0 2rem;color:var(--text)}
+.cta-row{display:flex;flex-wrap:wrap;gap:.8rem}
+.hero-note{margin-top:1.4rem;font-size:.95rem;color:var(--muted);max-width:32rem}
+
+/* phone with scripted chat */
+.phone{max-width:380px;margin:0 auto;width:100%;border-radius:26px;border:1px solid var(--line);background:#fff;box-shadow:0 24px 50px -28px rgba(11,52,52,.45);overflow:hidden;font-family:var(--ui)}
+.phone-head{background:var(--teal);color:#fff;padding:.8rem 1rem;display:flex;align-items:center;gap:.7rem}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--marigold);color:var(--teal-ink);display:grid;place-items:center;font:700 1.05rem var(--display)}
+.phone-head strong{display:block;font-size:.98rem;line-height:1.2}
+.phone-head span{font-size:.78rem;opacity:.85}
+.closed{margin-left:auto;font-size:.74rem;background:rgba(255,255,255,.16);padding:.25rem .55rem;border-radius:99px;white-space:nowrap}
+.thread{list-style:none;margin:0;padding:1rem .9rem;background:var(--chat-bg);min-height:392px;display:flex;flex-direction:column;gap:.5rem}
+.msg{max-width:84%;padding:.5rem .7rem .35rem;border-radius:12px;font-size:.93rem;line-height:1.4;color:#1d2b2b;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.msg time{display:block;text-align:right;font-size:.68rem;color:#5f7473;margin-top:.15rem}
+.msg.bot{align-self:flex-start;background:#fff;border-top-left-radius:4px}
+.msg.you{align-self:flex-end;background:var(--bubble-out);border-top-right-radius:4px}
+.is-hidden{display:none}
+.typing{align-self:flex-start;background:#fff;border-radius:12px;border-top-left-radius:4px;padding:.6rem .8rem;display:flex;gap:4px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#8aa09e;animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.phone-foot{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.7rem 1rem;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted)}
+.phone-foot button{font:600 .82rem var(--display);background:none;border:0;color:var(--teal);cursor:pointer;text-decoration:underline;padding:.2rem}
+@media(prefers-reduced-motion:reduce){.typing i{animation:none}}
+
+/* sections */
+section{padding:4.5rem 0}
+.tint{background:var(--mist);border-block:1px solid var(--line)}
+.section-head{max-width:40rem;margin-bottom:2.6rem}
+.section-head p{margin-top:1rem;color:var(--muted)}
+
+/* what it handles: three columns split by rules */
+.handles{display:grid;gap:0}
+@media(min-width:860px){.handles{grid-template-columns:repeat(3,1fr)}}
+.handle{padding:0 0 2rem}
+@media(min-width:860px){.handle{padding:0 2rem 0 0}.handle+.handle{padding-left:2rem;border-left:1px solid var(--line)}}
+@media(max-width:859px){.handle+.handle{border-top:1px solid var(--line);padding-top:2rem}}
+.handle h3{margin-bottom:.6rem}
+.say{margin-top:1rem;padding:.7rem .9rem;background:var(--mist);border-left:4px solid var(--marigold);font:.95rem/1.45 var(--ui);color:var(--teal-ink)}
+.tint .say{background:#fff}
+
+/* timeline */
+.timeline{list-style:none;margin:0;padding:0;max-width:44rem;border-left:3px solid var(--teal)}
+.timeline li{padding:0 0 1.9rem 1.6rem;position:relative}
+.timeline li::before{content:"";position:absolute;left:-9px;top:.55rem;width:15px;height:15px;border-radius:50%;background:var(--marigold);border:3px solid var(--paper)}
+.timeline h3{margin-bottom:.25rem}
+.timeline p{margin:0;color:var(--muted)}
+
+/* demo */
+.demo{display:grid;gap:2.4rem;align-items:start}
+@media(min-width:900px){.demo{grid-template-columns:.85fr 1.15fr}}
+.demo-box{border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;min-height:520px;display:flex;flex-direction:column}
+#n8n-chat{flex:1;min-height:520px;display:none;
+  --chat--color--primary:var(--teal);--chat--color--primary--shade-100:var(--teal-ink);
+  --chat--header--background:var(--teal);--chat--header--color:#fff;
+  --chat--font-family:var(--ui);--chat--border-radius:10px;--chat--body--background:var(--chat-bg)}
+.demo-box.is-live #n8n-chat{display:block}
+.demo-box.is-live .offline{display:none}
+.offline{margin:auto;padding:2rem;max-width:26rem}
+.offline h3{margin-bottom:.6rem}
+.hint{list-style:none;padding:0;margin:1.2rem 0 0;display:grid;gap:.5rem}
+.hint li{font:.95rem/1.4 var(--ui);background:var(--mist);padding:.55rem .8rem;border-radius:8px}
+
+/* pricing */
+.plans{display:grid;gap:1.2rem}
+@media(min-width:900px){.plans{grid-template-columns:repeat(3,1fr);align-items:stretch}}
+.plan{border:1px solid var(--line);border-radius:16px;padding:1.8rem 1.6rem;background:#fff;display:flex;flex-direction:column}
+.plan.rec{background:var(--teal);color:#E6F1EE;border-color:var(--teal)}
+.plan.rec h3,.plan.rec .price{color:#fff}
+.plan .for{font-size:.95rem;color:var(--muted);margin:.3rem 0 1.2rem}
+.plan.rec .for{color:#BFD8D3}
+.price{font:700 2.2rem/1 var(--display);color:var(--teal-ink);letter-spacing:-.02em}
+.price small{display:block;font:500 .95rem var(--body);letter-spacing:0;color:var(--muted);margin-top:.4rem}
+.plan.rec .price small{color:#BFD8D3}
+.plan ul{list-style:none;padding:0;margin:1.4rem 0 1.6rem;display:grid;gap:.55rem;font-size:.98rem}
+.plan li{padding-left:1.4rem;position:relative}
+.plan li::before{content:"";position:absolute;left:0;top:.55rem;width:.7rem;height:.38rem;border-left:2px solid var(--marigold);border-bottom:2px solid var(--marigold);transform:rotate(-45deg)}
+.plan .btn{margin-top:auto;text-align:center}
+.plan.rec .btn-ghost{border-color:#fff;color:#fff}.plan.rec .btn-ghost:hover{background:#fff;color:var(--teal)}
+.fine{margin-top:1.4rem;font-size:.95rem;color:var(--muted);max-width:44rem}
+
+/* faq */
+.faq{max-width:46rem}
+details{border-bottom:1px solid var(--line);padding:1.1rem 0}
+summary{cursor:pointer;font:700 1.12rem var(--display);color:var(--teal-ink);list-style:none;display:flex;justify-content:space-between;gap:1rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:1.4rem;line-height:1;color:var(--teal)}
+details[open] summary::after{content:"–"}
+details p{margin:.8rem 0 0;color:var(--text)}
+
+/* closing */
+.closing{background:var(--teal);color:#E6F1EE}
+.closing h2{color:#fff;max-width:36rem}
+.closing p{max-width:34rem;margin:1rem 0 1.8rem;color:#CFE3DF}
+.closing .btn-ghost{border-color:#fff;color:#fff}.closing .btn-ghost:hover{background:#fff;color:var(--teal)}
+footer{padding:2rem 0;font-size:.92rem;color:var(--muted)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:.6rem 2rem;justify-content:space-between}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" data-brand>ReplyMitra</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#handles">What it does</a></li>
+        <li><a href="#golive">Going live</a></li>
+        <li><a href="#demo">Live demo</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">Questions</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary" href="#contact" data-wa="Hi, I'd like to see a demo of the WhatsApp assistant.">Chat with us</a>
+  </div>
+</header>
+
+<main id="main">
+<div id="top"></div>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1>Your WhatsApp replies to customers at 11 pm.</h1>
+      <p class="lede"><span data-brand>ReplyMitra</span> answers questions, books appointments and passes tricky chats to you, in English, Hindi or Hinglish. Made for clinics, salons and coaching centres.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#contact" data-wa="Hi, I'd like a free demo using my own price list and FAQs.">Get a free demo</a>
+        <a class="btn btn-ghost" href="#demo">Try the live demo</a>
+      </div>
+      <p class="hero-note">We load your own price list and FAQs, so the demo answers like your front desk, not like a generic bot.</p>
+    </div>
+
+    <div class="phone" aria-label="Example conversation">
+      <div class="phone-head">
+        <div class="avatar" aria-hidden="true">S</div>
+        <div><strong>Smile Dental Clinic</strong><span>Example conversation</span></div>
+        <div class="closed">Clinic closed</div>
+      </div>
+      <ol class="thread" id="thread">
+        <li class="msg you">Hi, cleaning ka kitna charge hai?<time>11:42 pm</time></li>
+        <li class="msg bot">Namaste! Cleaning ₹1,200 hai aur lagbhag 45 minute lagte hain. Kya main appointment book kar doon?<time>11:42 pm</time></li>
+        <li class="msg you">Haan, kal shaam 5 baje<time>11:43 pm</time></li>
+        <li class="msg bot">Kal 5 baje ka slot khaali hai. Aapka naam bataiye?<time>11:43 pm</time></li>
+        <li class="msg you">Rahul Sharma<time>11:43 pm</time></li>
+        <li class="msg bot">Done, Rahul! Cleaning, kal 5:00 pm, Smile Dental Clinic, Sector 62, Noida.<time>11:43 pm</time></li>
+      </ol>
+      <div class="phone-foot"><span>Booked in under a minute. Nobody on the team was awake.</span><button type="button" id="replay">Replay</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="tint" id="handles">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>What it takes off your plate</h2>
+      <p>The routine questions that eat your day, handled the moment they arrive.</p>
+    </div>
+    <div class="handles">
+      <div class="handle">
+        <h3>Answers from your own list</h3>
+        <p>Prices, timings, address, payment options. It only uses the information you give us, and says so when it doesn’t know.</p>
+        <div class="say">“Is a checkup painful?”<br>“No, it’s painless and takes about 20 minutes.”</div>
+      </div>
+      <div class="handle">
+        <h3>Books the appointment</h3>
+        <p>Asks for the name, service and time, checks what is free, and confirms. A slot can’t be booked twice.</p>
+        <div class="say">“Book me Saturday 3 pm.”<br>“That slot is free. Shall I confirm?”</div>
+      </div>
+      <div class="handle">
+        <h3>Hands over to you</h3>
+        <p>Refunds, complaints or a customer who wants a person: the assistant steps back and you take over the chat.</p>
+        <div class="say">“I’ve informed our team, they will reply shortly.”</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="golive">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Live on your WhatsApp in about a week</h2>
+      <p>You send us what you already have. We do the rest.</p>
+    </div>
+    <ol class="timeline">
+      <li><h3>Day 1: you send your price list and FAQs</h3><p>A photo or a document is fine. We turn it into the assistant’s knowledge.</p></li>
+      <li><h3>Days 2 to 3: we set up your WhatsApp number</h3><p>This runs through WhatsApp’s official business platform and takes the longest, so we start it first.</p></li>
+      <li><h3>Days 4 to 5: we build and test</h3><p>You try about twenty real questions, including awkward ones, and we adjust until it sounds like you.</p></li>
+      <li><h3>Day 7: it goes live</h3><p>Two weeks of tuning are included while you watch real chats come in.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="tint" id="demo">
+  <div class="wrap demo">
+    <div>
+      <h2>Ask it something</h2>
+      <p>This is a sample clinic with a made-up price list. Type like a real customer, in English, Hindi or Hinglish.</p>
+      <ul class="hint">
+        <li>“Cleaning ka kitna charge hai?”</li>
+        <li>“What are your timings on Saturday?”</li>
+        <li>“Book a checkup for tomorrow”</li>
+        <li>“I want a refund”</li>
+      </ul>
+    </div>
+    <div class="demo-box" id="demo-box">
+      <div class="offline">
+        <h3>The live demo is offline right now</h3>
+        <p>Message us and we’ll set one up on your own price list and FAQs, usually within 48 hours.</p>
+        <a class="btn btn-primary" href="#contact" data-wa="Hi, can you set up a demo with my price list?">Ask for a demo</a>
+      </div>
+      <div id="n8n-chat" aria-label="Live demo chat"></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Simple pricing</h2>
+      <p>One setup fee, then a monthly fee that covers hosting, monitoring and AI usage.</p>
+    </div>
+    <div class="plans">
+      <article class="plan">
+        <h3>Starter</h3>
+        <p class="for">For businesses that mainly get repeat questions</p>
+        <div class="price">₹12,000<small>one-time setup, then ₹3,000 a month</small></div>
+        <ul>
+          <li>Answers from your price list and FAQs</li>
+          <li>English, Hindi and Hinglish</li>
+          <li>Collects names and numbers of interested customers</li>
+          <li>Hands over to you when needed</li>
+        </ul>
+        <a class="btn btn-ghost" href="#contact" data-wa="Hi, I'm interested in the Starter plan.">Choose Starter</a>
+      </article>
+      <article class="plan rec">
+        <h3>Growth</h3>
+        <p class="for">Recommended for clinics and salons that take appointments</p>
+        <div class="price">₹25,000<small>one-time setup, then ₹6,000 a month</small></div>
+        <ul>
+          <li>Everything in Starter</li>
+          <li>Books appointments without double-booking</li>
+          <li>Appointment reminders and alerts to you</li>
+          <li>Bot pauses while you handle a chat</li>
+        </ul>
+        <a class="btn btn-primary" href="#contact" data-wa="Hi, I'm interested in the Growth plan.">Choose Growth</a>
+      </article>
+      <article class="plan">
+        <h3>Pro</h3>
+        <p class="for">For busy centres that also want the website covered</p>
+        <div class="price">₹45,000<small>one-time setup, then ₹10,000 a month</small></div>
+        <ul>
+          <li>Everything in Growth</li>
+          <li>Chat assistant on your website</li>
+          <li>Leads sent to your CRM or sheet</li>
+          <li>Monthly report: chats, leads, bookings</li>
+        </ul>
+        <a class="btn btn-ghost" href="#contact" data-wa="Hi, I'm interested in the Pro plan.">Choose Pro</a>
+      </article>
+    </div>
+    <p class="fine">WhatsApp charges for some messages, and those are billed to you at cost with no markup. We show the estimate before you sign. Prices exclude GST.</p>
+  </div>
+</section>
+
+<section class="tint" id="faq">
+  <div class="wrap">
+    <div class="section-head"><h2>Questions owners ask</h2></div>
+    <div class="faq">
+      <details><summary>What if it says something wrong?</summary><p>It answers only from the price list and FAQs you give us. If the answer isn’t there, or the customer is upset, it tells them your team will reply and alerts you instead of guessing.</p></details>
+      <details><summary>Can my customers still talk to a person?</summary><p>Yes. Anyone can ask for a person at any time. While you handle a chat, the assistant stays silent so you never talk over each other.</p></details>
+      <details><summary>Do I need a new WhatsApp number?</summary><p>The assistant runs on a number registered with WhatsApp’s business platform. We’ll check your current number and tell you the simplest option before you pay anything.</p></details>
+      <details><summary>Which languages does it understand?</summary><p>English, Hindi and Hinglish. It replies in the language the customer uses.</p></details>
+      <details><summary>What does WhatsApp itself charge?</summary><p>WhatsApp bills per message for some message types, and the rates change from time to time. We pass these through at cost and give you an estimate based on your expected chats.</p></details>
+      <details><summary>What happens to my customers’ chats?</summary><p>Chats are stored only to run the service and produce your reports. Read the <a href="privacy.html">privacy page</a> for the details, and ask us to delete your data at any time.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="closing" id="contact">
+  <div class="wrap">
+    <h2>See it answer your customers’ questions</h2>
+    <p>Send us your price list. We’ll load it into a demo and show you the assistant replying in your voice.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#contact" data-wa="Hi, I'd like a free demo using my own price list and FAQs.">Message us on WhatsApp</a>
+      <a class="btn btn-ghost" href="#contact" data-mail>Email us</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year">2026</span> <span data-brand>ReplyMitra</span></span>
+    <span><a href="privacy.html">Privacy</a></span>
+    <span>WhatsApp is a trademark of Meta. We are not affiliated with or endorsed by WhatsApp or Meta.</span>
+  </div>
+</footer>
+
+<script>
+/* ============ EDIT THESE FOUR LINES ============ */
+const CONFIG = {
+  brand: "ReplyMitra",                         // your business name
+  whatsappNumber: "91XXXXXXXXXX",              // country code + number, digits only, e.g. 919812345678
+  email: "hello@example.com",                  // your email
+  chatWebhookUrl: ""                           // production URL of your n8n Chat Trigger (see README); leave empty to show the offline card
+};
+/* ================================================ */
+
+document.documentElement.classList.add("js");
+document.querySelectorAll("[data-brand]").forEach(function(el){ el.textContent = CONFIG.brand; });
+if (CONFIG.brand !== "ReplyMitra") { document.title = CONFIG.brand + ": an AI receptionist for your WhatsApp"; }
+document.getElementById("year").textContent = new Date().getFullYear();
+
+var waOk = /^\d{10,15}$/.test(CONFIG.whatsappNumber);
+document.querySelectorAll("[data-wa]").forEach(function(a){
+  if (waOk) {
+    a.href = "https://wa.me/" + CONFIG.whatsappNumber + "?text=" + encodeURIComponent(a.getAttribute("data-wa"));
+    a.target = "_blank"; a.rel = "noopener";
+  }
+});
+var mailOk = CONFIG.email && CONFIG.email.indexOf("example.com") === -1;
+document.querySelectorAll("[data-mail]").forEach(function(a){
+  if (mailOk) { a.href = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent("Demo request"); }
+  else { a.style.display = "none"; }
+});
+
+/* ---- scripted conversation in the hero ---- */
+(function(){
+  var thread = document.getElementById("thread");
+  var items = Array.prototype.slice.call(thread.querySelectorAll(".msg"));
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var timers = [];
+  function clear(){ timers.forEach(clearTimeout); timers = []; var t = thread.querySelector(".typing"); if (t) t.remove(); }
+  function play(){
+    clear();
+    if (reduce) { items.forEach(function(li){ li.classList.remove("is-hidden"); }); return; }
+    items.forEach(function(li){ li.classList.add("is-hidden"); });
+    var at = 500;
+    items.forEach(function(li){
+      var bot = li.classList.contains("bot");
+      if (bot) {
+        timers.push(setTimeout(function(){
+          var d = document.createElement("li"); d.className = "typing"; d.setAttribute("aria-hidden","true");
+          d.innerHTML = "<i></i><i></i><i></i>"; thread.insertBefore(d, li);
+        }, at));
+        at += 1100;
+      } else { at += 700; }
+      timers.push(setTimeout(function(){
+        var t = thread.querySelector(".typing"); if (t) t.remove();
+        li.classList.remove("is-hidden");
+      }, at));
+      at += 500;
+    });
+  }
+  document.getElementById("replay").addEventListener("click", play);
+  play();
+})();
+
+/* ---- live demo (n8n chat widget), loads only when a webhook URL is set ---- */
+(function(){
+  if (!CONFIG.chatWebhookUrl) return;
+  var CHAT_VERSION = "1.44.3";
+  var base = "https://cdn.jsdelivr.net/npm/@n8n/chat@" + CHAT_VERSION + "/dist/";
+  var css = document.createElement("link"); css.rel = "stylesheet"; css.href = base + "style.css"; document.head.appendChild(css);
+  import(base + "chat.bundle.es.js").then(function(m){
+    m.createChat({
+      webhookUrl: CONFIG.chatWebhookUrl,
+      target: "#n8n-chat",
+      mode: "fullscreen",
+      loadPreviousSession: false,
+      showWelcomeScreen: false,
+      initialMessages: [
+        "Namaste! I’m the assistant for Smile Dental Clinic (a demo). Ask about prices or timings, or book a slot.",
+        "English, Hindi ya Hinglish, sab chalega."
+      ],
+      i18n: { en: { title: "Smile Dental Clinic", subtitle: "Demo assistant", footer: "", getStarted: "New conversation", inputPlaceholder: "Type your message…" } }
+    });
+    document.getElementById("demo-box").classList.add("is-live");
+  }).catch(function(err){ console.warn("Chat widget failed to load", err); });
+})();
+</script>
+</body>
+</html>
